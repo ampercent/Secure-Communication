@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File Drop</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            color: #333;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+
+        .btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            background-color: #004494;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            word-wrap: break-word;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 16px);
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body style="background-color: #f8f9fa;">
+
+    <h2 style="text-align: center; color: #333;">🛡️ Secure File Drop</h2>
+
+    <div class="card">
+        <h3>Upload a File</h3>
+        <form id="uploadForm">
+            <label for="fileInput"><strong>Select a file to securely upload (Max 10MB):</strong></label><br><br>
+            <input type="file" id="fileInput" name="file" required>
+            <br>
+            <button type="submit" class="btn" id="uploadBtn">Encrypt & Upload</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <div class="card" style="margin-top: 30px;">
+        <h3>Retrieve a File</h3>
+        <form id="downloadForm">
+            <label for="fileIdInput"><strong>Enter File ID to Download:</strong></label>
+            <input type="text" id="fileIdInput" placeholder="e.g., 123e4567-e89b-12d3-a456-426614174000" required>
+            <br>
+            <button type="submit" class="btn btn-success">Verify & Download</button>
+        </form>
+    </div>
+
+    <script>
+        // --- Upload Logic ---
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const resultDiv = document.getElementById('result');
+            const fileInput = document.getElementById('fileInput');
+            const submitBtn = document.getElementById('uploadBtn');
+
+            if (fileInput.files.length === 0) return;
+
+            // UI Feedback
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Encrypting...';
+            resultDiv.style.display = 'block';
+            resultDiv.className = '';
+            resultDiv.textContent = 'Uploading and securing file...';
+
+            // Prepare multipart/form-data
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `<strong>Success!</strong> ${data.message}<br><br><strong>Save this File ID to retrieve it:</strong><br><code style="font-size: 1.1em; display: block; margin-top: 10px; background: #fff; padding: 5px; border: 1px solid #ccc;">${data.fileId}</code>`;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `<strong>Error:</strong> ${data.error}`;
+                }
+            } catch (err) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `<strong>Network Error:</strong> Could not connect to the server.`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Encrypt & Upload';
+                fileInput.value = '';
+            }
+        });
+
+        // --- Download Logic ---
+        document.getElementById('downloadForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const fileId = document.getElementById('fileIdInput').value.trim();
+            if (!fileId) return;
+
+            // Redirect the browser to the GET endpoint. 
+            // If the decryption and signature verification pass, the browser will download the file.
+            // If it fails, the browser will display the JSON error message.
+            window.location.href = `/file/${fileId}`;
+        });
+    </script>
+</body>
+
+</html>

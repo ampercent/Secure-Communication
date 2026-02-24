@@ -1,0 +1,7 @@
+# .dockerignore
+node_modules
+storage/*
+!storage/.gitkeep
+keys/*.pem
+db/database.sqlite
+verification.log

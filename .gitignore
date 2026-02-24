@@ -1,0 +1,16 @@
+# .gitignore
+# Ignore Node modules
+node_modules/
+
+# Ignore local database
+db/database.sqlite
+
+# SECRETS: NEVER COMMIT PRIVATE KEYS!
+keys/*.pem
+
+# Ignore encrypted storage files but keep the directory
+storage/*
+!storage/.gitkeep
+
+# Ignore log files
+verification.log
